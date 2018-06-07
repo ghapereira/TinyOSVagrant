@@ -154,5 +154,4 @@ public class TestSerialMsg extends net.tinyos.message.Message {
     public static int sizeBits_counter() {
         return 16;
     }
-
 }
