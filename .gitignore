@@ -1,3 +1,7 @@
 .vagrant
 */build/
 *.class
+*.swp
+*.vscode*
+ubuntu*.log
+tinyos-main/

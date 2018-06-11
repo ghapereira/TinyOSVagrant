@@ -25,7 +25,6 @@ implementation {
 
     // Evento disparado quando o radio completou a inicializacao
     event void AMControl.startDone(error_t err) {
-        call Leds.led1Toggle();
         if (err == SUCCESS) {
             // Verifica o input do usuário para saber se deve fazer o flood
         } else {
@@ -82,18 +81,24 @@ implementation {
             tp2pkt->HOPS = 10;
             tp2pkt->FATHER_ID = 0;
 
-            send_result = call AMSend.send(AM_BROADCAST_ADDR, &tp2pkt, sizeof(iot_tp2_struct));
+            send_result = call AMSend.send(AM_BROADCAST_ADDR, &pkt, sizeof(iot_tp2_struct));
+
             if (send_result == SUCCESS) {
                 busy = TRUE;
+                call Leds.led2Toggle();
             }
         }
     }
 
     // Fim do procedimento de envio
     event void AMSend.sendDone(message_t* msg, error_t err) {
+        /*
         if (&pkt == msg) {
             busy = FALSE;
         }
+        */
+        // TODO teste; REMOVER
+        busy = FALSE;
     }
 
     // Processa pacote de flood
@@ -104,18 +109,23 @@ implementation {
 
     // Evento de recepcao dos dados
     event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len) {
+        call Leds.led1Toggle();
         if (len == sizeof(iot_tp2_struct)) {
             iot_tp2_struct* tp2pkt = (iot_tp2_struct *)payload;
 
             // Elimina pacote se origem e si proprio
-            // TODO: como obter si proprio?
             if (tp2pkt->SRC_ADDR == SELF_ADDR) {
+                return msg;
+            }
+
+            if (tp2pkt == NULL) {
                 return msg;
             }
 
             // redireciona mensagem se nao e o destino
             if (tp2pkt->DST_ADDR != SELF_ADDR) {
-                send_result = call AMSend.send(AM_BROADCAST_ADDR, &tp2pkt, sizeof(iot_tp2_struct));
+                // A redirecao e feita aqui mesmo?
+                send_result = call AMSend.send(AM_BROADCAST_ADDR, &pkt, sizeof(iot_tp2_struct));
                 // TODO: o que fazer se o envio falhar?
                 return msg;
             }
