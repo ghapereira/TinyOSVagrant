@@ -3,8 +3,11 @@
 #define ID_FLOOD_REQ 0x42
 #define ID_RESPOSTA  0x93
 
-// TODO: como determinar corretamente SELF_ADDR?
-#define SELF_ADDR 0x00
+#define BASE_ADDR 0x00 // Endereco da base
+
+#define SELF_ADDR 0x13 // Endereco do sensor; o grupo possui 0x13, 0x14 e 0x15
+
+#define SAMPLING_FREQUENCY 100 // Realiza leituras a cada 100 milissegundos
 
 typedef nx_struct iot_tp2_grupo7_payload {
     nx_uint16_t TEMPERATURA;
