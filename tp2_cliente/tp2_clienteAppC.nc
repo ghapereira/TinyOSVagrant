@@ -8,7 +8,8 @@ implementation {
   components ActiveMessageC;
   components new AMSenderC(AM_BLINKTORADIOMSG);
   components new AMReceiverC(AM_BLINKTORADIOMSG);
-  components new DemoSensorC() as Sensor;
+  components new PhotoC() as Sensor;
+  // components new DemoSensorC() as Sensor;
 
   App.Boot -> MainC;
   App.Leds -> LedsC;
@@ -19,5 +20,6 @@ implementation {
   App.AMSend -> AMSenderC;
   App.Receive -> AMReceiverC;
   App.Read -> Sensor;
+  // App.Read -> Sensor;
 }
 

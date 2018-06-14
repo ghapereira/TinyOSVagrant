@@ -15,6 +15,7 @@ module tp2_clienteC {
     uses interface Receive;
     uses interface SplitControl as AMControl;
     uses interface Read<uint16_t>;
+    // uses interface Read<uint16_t>;
 }
 
 implementation {
@@ -73,7 +74,8 @@ implementation {
             tp2pkt->PAYLOAD.LUMINOSIDADE = data;
 
             tp2pkt->SRC_ADDR = SELF_ADDR;
-            tp2pkt->DST_ADDR = BASE_ADDR;
+            // tp2pkt->DST_ADDR = BASE_ADDR;
+	    tp2pkt->DST_ADDR = 0x01;
             tp2pkt->TYPE = ID_RESPOSTA;
             tp2pkt->LENGTH = 5;
 
@@ -82,9 +84,11 @@ implementation {
             tp2pkt->FATHER_ID = 0;
 
             send_result = call AMSend.send(AM_BROADCAST_ADDR, &pkt, sizeof(iot_tp2_struct));
+            // send_result = call AMSend.send(tp2pkt->DST_ADDR, &pkt, sizeof(iot_tp2_struct));
 
             if (send_result == SUCCESS) {
                 busy = TRUE;
+                // LED2: yellow
                 call Leds.led2Toggle();
             }
         }
@@ -92,13 +96,9 @@ implementation {
 
     // Fim do procedimento de envio
     event void AMSend.sendDone(message_t* msg, error_t err) {
-        /*
         if (&pkt == msg) {
             busy = FALSE;
         }
-        */
-        // TODO teste; REMOVER
-        busy = FALSE;
     }
 
     // Processa pacote de flood

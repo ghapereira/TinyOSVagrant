@@ -3,8 +3,8 @@
 #define ID_FLOOD_REQ 0x42
 #define ID_RESPOSTA  0x93
 
-// TODO: como determinar corretamente SELF_ADDR?
-#define SELF_ADDR 0x00
+#define BASE_ADDR 0x00 // Endereco da base
+#define SELF_ADDR 0x00 
 
 typedef nx_struct iot_tp2_grupo7_payload {
     nx_uint16_t TEMPERATURA;
