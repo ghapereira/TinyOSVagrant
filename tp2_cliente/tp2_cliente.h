@@ -4,8 +4,11 @@
 #define ID_RESPOSTA  0x93
 
 #define BASE_ADDR 0x00 // Endereco da base
+#define DEFAULT_FATHER_ID 0xffff
+#define DEFAULT_HOPS 0xffff
+#define DEFAULT_FLOOD_ID 0x00
 
-#define SELF_ADDR 0x13 // Endereco do sensor; o grupo possui 0x13, 0x14 e 0x15
+#define SELF_ADDR 0x14 // Endereco do sensor; o grupo possui 0x13, 0x14 e 0x15
 
 #define SAMPLING_FREQUENCY 200 // Realiza leituras a cada 200 milissegundos
 
@@ -25,6 +28,7 @@ typedef nx_struct iot_tp2_struct {
     nx_uint8_t  TYPE;
     nx_uint8_t  LENGTH;
     nx_uint8_t  HOPS;
+    nx_uint8_t  FLOOD_ID;
     nx_uint16_t FATHER_ID;
 
     iot_tp2_grupo7_payload PAYLOAD;

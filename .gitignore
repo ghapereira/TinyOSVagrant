@@ -5,3 +5,4 @@
 *.vscode*
 ubuntu*.log
 tinyos-main/
+*.swp

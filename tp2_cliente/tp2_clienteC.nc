@@ -19,7 +19,17 @@ module tp2_clienteC {
 }
 
 implementation {
+    // ID do pai
+    uint16_t father_id;
+    // Hops a partir do sink
+    uint16_t hops;
+    // Ultimo flood recebido
+    uint8_t last_flood_id;
+
     event void Boot.booted() {
+        father_id = DEFAULT_FATHER_ID;
+        hops = DEFAULT_HOPS;
+        last_flood_id = DEFAULT_FLOOD_ID;
         call AMControl.start();
         call Timer0.startPeriodic(SAMPLING_FREQUENCY);
     }
@@ -74,17 +84,14 @@ implementation {
             tp2pkt->PAYLOAD.LUMINOSIDADE = data;
 
             tp2pkt->SRC_ADDR = SELF_ADDR;
-            // tp2pkt->DST_ADDR = BASE_ADDR;
-	    tp2pkt->DST_ADDR = 0x01;
+            tp2pkt->DST_ADDR = BASE_ADDR;
             tp2pkt->TYPE = ID_RESPOSTA;
             tp2pkt->LENGTH = 5;
 
-            // TODO: os valores a seguir devem ser obtidos a partir do pai
-            tp2pkt->HOPS = 10;
-            tp2pkt->FATHER_ID = 0;
+            tp2pkt->HOPS = hops;
+            tp2pkt->FATHER_ID = father_id;
 
             send_result = call AMSend.send(AM_BROADCAST_ADDR, &pkt, sizeof(iot_tp2_struct));
-            // send_result = call AMSend.send(tp2pkt->DST_ADDR, &pkt, sizeof(iot_tp2_struct));
 
             if (send_result == SUCCESS) {
                 busy = TRUE;
@@ -102,16 +109,64 @@ implementation {
     }
 
     // Processa pacote de flood
-    void processa_flood(iot_tp2_struct* flood_pkt) {}
+    void processa_flood(iot_tp2_struct* flood_pkt) {
+        // Troca pai se nao tem pai, ou se pai e de flood_id diferente
+	bool deve_trocar_pai = father_id == DEFAULT_FATHER_ID || 
+			       hops == DEFAULT_HOPS || 
+			       last_flood_id != flood_pkt->FLOOD_ID;
+	
+	// Apos verificar se o pai nao era de um flood anterior, atualiza o flood
+	last_flood_id = flood_pkt->FLOOD_ID;
+
+	if (deve_trocar_pai) {
+	    father_id = flood_pkt->SRC_ADDR;
+            hops = flood_pkt->HOPS + 1;            
+	    return;
+        }
+
+	// Troca pai se mais proximo do sink
+        /*
+	if (flood_pkt->hops < hops) {
+	    father_id = flood_pkt->SRC_ADDR;
+            hops = flood_pkt->HOPS + 1;
+  	}
+	*/
+
+        // Procede com a continuacao do flood
+        if (!busy) {
+            iot_tp2_struct* tp2pkt = (iot_tp2_struct *)
+                (call Packet.getPayload(&pkt, sizeof(iot_tp2_struct)));
+
+            if (tp2pkt == NULL) {
+                return;
+            }
+
+            tp2pkt->SRC_ADDR = SELF_ADDR;
+            tp2pkt->DST_ADDR = BASE_ADDR;
+            tp2pkt->TYPE = ID_FLOOD_REQ;
+
+            tp2pkt->HOPS = hops;
+            tp2pkt->FATHER_ID = father_id;
+	    tp2pkt->FLOOD_ID = 
+
+            send_result = call AMSend.send(AM_BROADCAST_ADDR, &pkt, sizeof(iot_tp2_struct));
+
+            if (send_result == SUCCESS) {
+                busy = TRUE;
+            }
+        }
+    }
 
     // Processa resposta do servidor
     void processa_resposta(iot_tp2_struct* resposta_pkt) {}
 
     // Evento de recepcao dos dados
     event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len) {
-        call Leds.led1Toggle();
-        if (len == sizeof(iot_tp2_struct)) {
+        
+        if (len == sizeof(iot_tp2_struct)) {	    
             iot_tp2_struct* tp2pkt = (iot_tp2_struct *)payload;
+
+	    call Leds.led1Toggle();
 
             // Elimina pacote se origem e si proprio
             if (tp2pkt->SRC_ADDR == SELF_ADDR) {
