@@ -9,11 +9,11 @@ module tp2_clienteC {
     uses interface Boot;
     uses interface Leds;
     uses interface Timer<TMilli> as Timer0;
-    uses interface Packet;
-    uses interface AMPacket;
-    uses interface AMSend;
-    uses interface Receive;
-    uses interface SplitControl as AMControl;
+    uses interface Packet as RadioPacket;
+    uses interface AMPacket as RadioAMPacket;
+    uses interface AMSend as RadioSend;
+    uses interface Receive as RadioReceive;
+    uses interface SplitControl as RadioAMControl;
     uses interface Read<uint16_t>;
     // uses interface Read<uint16_t>;
 }
@@ -30,21 +30,21 @@ implementation {
         father_id = DEFAULT_FATHER_ID;
         hops = DEFAULT_HOPS;
         last_flood_id = DEFAULT_FLOOD_ID;
-        call AMControl.start();
+        call RadioAMControl.start();
         call Timer0.startPeriodic(SAMPLING_FREQUENCY);
     }
 
     // Evento disparado quando o radio completou a inicializacao
-    event void AMControl.startDone(error_t err) {
+    event void RadioAMControl.startDone(error_t err) {
         if (err == SUCCESS) {
             // Verifica o input do usuário para saber se deve fazer o flood
         } else {
-            call AMControl.start();
+            call RadioAMControl.start();
         }
     }
 
     // Evento de desativacao do radio
-    event void AMControl.stopDone(error_t err) { }
+    event void RadioAMControl.stopDone(error_t err) { }
 
     // mensagem a ser enviada
     message_t pkt;
@@ -73,7 +73,7 @@ implementation {
 
         if (!busy) {
             iot_tp2_struct* tp2pkt = (iot_tp2_struct *)
-                (call Packet.getPayload(&pkt, sizeof(iot_tp2_struct)));
+                (call RadioPacket.getPayload(&pkt, sizeof(iot_tp2_struct)));
 
             if (tp2pkt == NULL) {
                 return;
@@ -91,7 +91,7 @@ implementation {
             tp2pkt->HOPS = hops;
             tp2pkt->FATHER_ID = father_id;
 
-            send_result = call AMSend.send(AM_BROADCAST_ADDR, &pkt, sizeof(iot_tp2_struct));
+            send_result = call RadioSend.send(AM_BROADCAST_ADDR, &pkt, sizeof(iot_tp2_struct));
 
             if (send_result == SUCCESS) {
                 busy = TRUE;
@@ -102,7 +102,7 @@ implementation {
     }
 
     // Fim do procedimento de envio
-    event void AMSend.sendDone(message_t* msg, error_t err) {
+    event void RadioSend.sendDone(message_t* msg, error_t err) {
         if (&pkt == msg) {
             busy = FALSE;
         }
@@ -135,7 +135,7 @@ implementation {
         // Procede com a continuacao do flood
         if (!busy) {
             iot_tp2_struct* tp2pkt = (iot_tp2_struct *)
-                (call Packet.getPayload(&pkt, sizeof(iot_tp2_struct)));
+                (call RadioPacket.getPayload(&pkt, sizeof(iot_tp2_struct)));
 
             if (tp2pkt == NULL) {
                 return;
@@ -149,7 +149,7 @@ implementation {
             tp2pkt->FATHER_ID = father_id;
 	    tp2pkt->FLOOD_ID = 
 
-            send_result = call AMSend.send(AM_BROADCAST_ADDR, &pkt, sizeof(iot_tp2_struct));
+            send_result = call RadioSend.send(AM_BROADCAST_ADDR, &pkt, sizeof(iot_tp2_struct));
 
             if (send_result == SUCCESS) {
                 busy = TRUE;
@@ -161,7 +161,7 @@ implementation {
     void processa_resposta(iot_tp2_struct* resposta_pkt) {}
 
     // Evento de recepcao dos dados
-    event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len) {
+    event message_t* RadioReceive.receive(message_t* msg, void* payload, uint8_t len) {
         
         if (len == sizeof(iot_tp2_struct)) {	    
             iot_tp2_struct* tp2pkt = (iot_tp2_struct *)payload;
@@ -180,7 +180,7 @@ implementation {
             // redireciona mensagem se nao e o destino
             if (tp2pkt->DST_ADDR != SELF_ADDR) {
                 // A redirecao e feita aqui mesmo?
-                send_result = call AMSend.send(AM_BROADCAST_ADDR, &pkt, sizeof(iot_tp2_struct));
+                send_result = call RadioSend.send(AM_BROADCAST_ADDR, &pkt, sizeof(iot_tp2_struct));
                 // TODO: o que fazer se o envio falhar?
                 return msg;
             }
