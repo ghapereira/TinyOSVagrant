@@ -4,13 +4,18 @@
 #define ID_RESPOSTA  0x93
 
 #define BASE_ADDR 0x00 // Endereco da base
-#define SELF_ADDR 0x00 
+#define SELF_ADDR 0x00
 
 typedef nx_struct iot_tp2_grupo7_payload {
     nx_uint16_t TEMPERATURA;
     nx_uint16_t LUMINOSIDADE;
     nx_uint8_t  ID_RESTANTE;
-    nx_uint8_t  PAYLOAD[PAYLOAD_SIZE_TP2];
+
+    // 13 bytes filler para contabilizar o tamanho total
+    nx_uint32_t FILLER_1;
+    nx_uint32_t FILLER_2;
+    nx_uint32_t FILLER_3;
+    nx_uint8_t  FILLER_4;
 } iot_tp2_grupo7_payload;
 
 typedef nx_struct iot_tp2_struct {

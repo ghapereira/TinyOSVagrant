@@ -15,7 +15,6 @@ module tp2_clienteC {
     uses interface Receive as RadioReceive;
     uses interface SplitControl as RadioAMControl;
     uses interface Read<uint16_t>;
-    // uses interface Read<uint16_t>;
 }
 
 implementation {
